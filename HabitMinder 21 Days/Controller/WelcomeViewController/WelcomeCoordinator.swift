@@ -16,7 +16,8 @@ final class WelcomeCoordinator: Coordinator {
     }
     
     func start() {
-        let welcomeVC = WelcomeViewController()
+        let networkAPI = NetworkAPI()
+        let welcomeVC = WelcomeViewController(networkAPI: networkAPI)
         welcomeVC.coordinator = self
         welcomeVC.quoteDelegate = self
         navigationController.pushViewController(welcomeVC, animated: true)

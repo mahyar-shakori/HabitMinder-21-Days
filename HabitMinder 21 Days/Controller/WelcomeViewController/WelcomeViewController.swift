@@ -10,7 +10,7 @@ import UIKit
 final class WelcomeViewController: UIViewController {
     
     private let welcomeView = WelcomeView()
-    private let networkAPI = NetworkAPI()
+    private let networkAPI: NetworkAPIProtocol
     weak var quoteDelegate: QuoteProtocol?
     var coordinator: WelcomeCoordinator?
     
@@ -20,6 +20,15 @@ final class WelcomeViewController: UIViewController {
         addWelcomeView()
         callGetQuoteAPI()
     }
+    
+    init(networkAPI: NetworkAPIProtocol = NetworkAPI()) {
+            self.networkAPI = networkAPI
+            super.init(nibName: nil, bundle: nil)
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
     
     private func addWelcomeView() {
         view.addSubview(welcomeView)
@@ -59,9 +68,16 @@ final class WelcomeViewController: UIViewController {
     }
     
     private func fetchQuote() {
-        networkAPI.fetchData(from: AuthEndpoint.getQuote, decodeType: [QuoteResponse].self, success: handleQuoteSuccess(quotes:), failure: handleQuoteFailure(error:))
+        Task {
+            do {
+                let quotes: [QuoteResponse] = try await networkAPI.fetchData(from: AuthEndpoint.getQuote, decodeType: [QuoteResponse].self)
+                handleQuoteSuccess(quotes: quotes)
+            } catch {
+                handleQuoteFailure(error: error)
+            }
+        }
     }
-   
+    
     private func handleQuoteSuccess(quotes: [QuoteResponse]) {
         if let firstQuote = quotes.first {
             let quoteToSend = firstQuote.quote.count > 100 ? LocalizedStrings.WelcomePage.defaultQuote : firstQuote.quote
